@@ -20,68 +20,7 @@ const __dirname = path.dirname(__filename);
 const SCRIPTS_DIR = path.join(__dirname, "scripts");
 const TEMP_DIR = path.join(__dirname, "temp");
 
-<<<<<<< HEAD
 // Headless CLI execution has been removed. All interactions are routed through the Bridge panel.
-=======
-// Helper function to run After Effects scripts
-function runExtendScript(scriptPath: string, args: Record<string, any> = {}): string {
-  try {
-    // Ensure temp directory exists
-    if (!fs.existsSync(TEMP_DIR)) {
-      fs.mkdirSync(TEMP_DIR, { recursive: true });
-    }
-
-    // Create a temporary file to hold the script arguments
-    const argsPath = path.join(TEMP_DIR, "args.json");
-    fs.writeFileSync(argsPath, JSON.stringify(args));
-
-    // Find After Effects executable location - modify as needed for your installation
-    // This is a common default location, adjust as necessary
-    const aePath = "C:\\Program Files\\Adobe\\Adobe After Effects 2025\\Support Files\\AfterFX.exe";
-    
-    // Verify After Effects executable exists
-    if (!fs.existsSync(aePath)) {
-      return `Error: After Effects executable not found at "${aePath}". Please check your installation.`;
-    }
-
-    // Verify script file exists
-    if (!fs.existsSync(scriptPath)) {
-      return `Error: Script file not found at "${scriptPath}".`;
-    }
-
-    // Try using the -m flag instead of -r for running scripts (alternative method)
-    // The -m flag tells After Effects to run a script without showing a dialog
-    const command = `"${aePath}" -m "${scriptPath}" "${argsPath}"`;
-    console.error(`Running command with -m flag: ${command}`);
-    
-    try {
-      const output = execSync(command, { encoding: 'utf8', timeout: 30000 });
-      return output;
-    } catch (execError: any) {
-      console.error("Command execution error:", execError);
-      
-      // If -m flag fails, try creating a JSX file that calls the script via BridgeTalk
-      // This is a different approach that can work if direct execution fails
-      console.error("Trying alternative approach using BridgeTalk...");
-      
-      const bridgeScriptPath = path.join(TEMP_DIR, "bridge_script.jsx");
-      const bridgeScriptContent = `
-#include "${scriptPath.replace(/\\/g, "/")}"
-alert("Script execution completed");
-      `;
-      
-      fs.writeFileSync(bridgeScriptPath, bridgeScriptContent);
-      
-      return `Error executing After Effects command: ${String(execError?.message || execError)}. 
-      This might be because After Effects cannot be accessed in headless mode.
-      Please try running the script "${path.basename(scriptPath)}" manually in After Effects.`;
-    }
-  } catch (error) {
-    console.error("Error running ExtendScript:", error);
-    return `Error: ${String(error)}`;
-  }
-}
->>>>>>> 0c5db8844f0e6dc90384d369c9ee395db85e9966
 
 // Helper function to read results from After Effects temp file
 function readResultsFromTempFile(): string {

@@ -790,7 +790,6 @@ function applyEffectTemplate(args) {
 
 // --- End of Function Definitions ---
 
-<<<<<<< HEAD
 // --- Bridge test function to verify communication and effects application ---
 function bridgeTestEffects(args) {
     try {
@@ -868,11 +867,6 @@ if (typeof JSON.stringify !== "function") {
         };
     })();
 }
-=======
-// AE 2025+ compatibility: Always use floating palette, warn if dockable panels are not supported
-var aeVersion = parseFloat(app.version);
-var isAE2025OrLater = aeVersion >= 24.0; // AE 2025 is version 24.x
->>>>>>> 0c5db8844f0e6dc90384d369c9ee395db85e9966
 
 // Always create a floating palette window for AE 2025+
 var panel = new Window("palette", "MCP Bridge Auto", undefined);
