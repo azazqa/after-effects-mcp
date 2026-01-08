@@ -342,11 +342,21 @@ Available scripts:
 - createTextLayer: Create a new text layer
 - createShapeLayer: Create a new shape layer
 - createSolidLayer: Create a new solid layer
-- setLayerProperties: Set properties for a layer
+- setLayerProperties: Set properties for a layer (including text properties)
 - setLayerKeyframe: Set a keyframe for a layer property
 - setLayerExpression: Set an expression for a layer property
 - applyEffect: Apply an effect to a layer
 - applyEffectTemplate: Apply a predefined effect template to a layer
+
+MCP Tools:
+- update-text-layer: Update text content and styling for text layers
+  Supported properties:
+  * text: Change text content
+  * fontFamily: Change font (e.g., 'Arial', 'Helvetica')
+  * fontSize: Change font size in pixels
+  * fillColor: Change text color as RGB array [r, g, b] with values 0-1
+  * alignment: Change text alignment ('left', 'center', 'right')
+  * position, opacity, scale, rotation: Transform properties
 
 Effect Templates:
 - gaussian-blur: Simple Gaussian blur effect
@@ -707,6 +717,85 @@ server.tool(
 );
 
 // --- END NEW EFFECTS TOOLS ---
+
+// --- BEGIN TEXT LAYER UPDATE TOOL ---
+
+// Add a tool for updating text layer properties
+server.tool(
+  "update-text-layer",
+  "Update text content and styling for a text layer in After Effects",
+  {
+    compIndex: z.number().int().positive().optional().describe("1-based index of the target composition. Uses active composition if not specified."),
+    compName: z.string().optional().describe("Name of the target composition. Uses active composition if not specified."),
+    layerIndex: z.number().int().positive().optional().describe("1-based index of the target layer."),
+    layerName: z.string().optional().describe("Name of the target layer."),
+    text: z.string().optional().describe("New text content."),
+    fontFamily: z.string().optional().describe("Font family name (e.g., 'Arial', 'Helvetica')."),
+    fontSize: z.number().positive().optional().describe("Font size in pixels."),
+    fillColor: z.array(z.number().min(0).max(1)).length(3).optional().describe("Text color as RGB array with values 0-1 (e.g., [1, 0, 0] for red)."),
+    alignment: z.enum(["left", "center", "right"]).optional().describe("Text alignment."),
+    position: z.array(z.number()).optional().describe("Position [x, y] or [x, y, z] coordinates."),
+    opacity: z.number().min(0).max(100).optional().describe("Opacity percentage (0-100)."),
+    scale: z.array(z.number()).optional().describe("Scale [x, y] or [x, y, z] as percentages."),
+    rotation: z.number().optional().describe("Rotation in degrees.")
+  },
+  async (parameters) => {
+    try {
+      // Build args object for setLayerProperties
+      const args: Record<string, any> = {};
+      
+      // Add composition identifier
+      if (parameters.compIndex) args.compIndex = parameters.compIndex;
+      if (parameters.compName) args.compName = parameters.compName;
+      
+      // Add layer identifier
+      if (parameters.layerIndex) args.layerIndex = parameters.layerIndex;
+      if (parameters.layerName) args.layerName = parameters.layerName;
+      
+      // Add text-specific properties
+      if (parameters.text !== undefined) args.text = parameters.text;
+      if (parameters.fontFamily) args.fontFamily = parameters.fontFamily;
+      if (parameters.fontSize) args.fontSize = parameters.fontSize;
+      if (parameters.fillColor) args.fillColor = parameters.fillColor;
+      if (parameters.alignment) args.alignment = parameters.alignment;
+      
+      // Add transform properties
+      if (parameters.position) args.position = parameters.position;
+      if (parameters.opacity !== undefined) args.opacity = parameters.opacity;
+      if (parameters.scale) args.scale = parameters.scale;
+      if (parameters.rotation !== undefined) args.rotation = parameters.rotation;
+      
+      // Clear any stale result data
+      clearResultsFile();
+      
+      // Write command to file for After Effects to pick up
+      writeCommandFile("setLayerProperties", args);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Command to update text layer has been queued.\n` +
+                  `Please ensure the "MCP Bridge Auto" panel is open in After Effects.\n` +
+                  `Use the "get-results" tool after a few seconds to check for results.`
+          }
+        ]
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error queuing text layer update: ${String(error)}`
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
+// --- END TEXT LAYER UPDATE TOOL ---
 
 // Add direct MCP function for applying effects
 server.tool(

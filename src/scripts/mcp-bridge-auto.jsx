@@ -201,6 +201,7 @@ function setLayerProperties(args) {
         var fontFamily = args.fontFamily; // New: font family
         var fontSize = args.fontSize; // New: font size
         var fillColor = args.fillColor; // New: font color
+        var alignment = args.alignment; // New: text alignment (left, center, right)
         
         // Find the composition (same logic as before)
         var comp = null;
@@ -231,7 +232,7 @@ function setLayerProperties(args) {
         var textDocument = null;
 
         // --- Text Property Handling ---
-        if (layer instanceof TextLayer && (textContent !== undefined || fontFamily !== undefined || fontSize !== undefined || fillColor !== undefined)) {
+        if (layer instanceof TextLayer && (textContent !== undefined || fontFamily !== undefined || fontSize !== undefined || fillColor !== undefined || alignment !== undefined)) {
             var sourceTextProp = layer.property("Source Text");
             if (sourceTextProp && sourceTextProp.value) {
                 var currentTextDocument = sourceTextProp.value; // Get the current value
@@ -263,6 +264,22 @@ function setLayerProperties(args) {
                     currentTextDocument.fillColor = fillColor;
                     changedProperties.push("fillColor");
                     updated = true;
+                }
+                // Text alignment
+                if (alignment !== undefined && alignment !== null) {
+                    var newJustification;
+                    if (alignment === "left") {
+                        newJustification = ParagraphJustification.LEFT_JUSTIFY;
+                    } else if (alignment === "center") {
+                        newJustification = ParagraphJustification.CENTER_JUSTIFY;
+                    } else if (alignment === "right") {
+                        newJustification = ParagraphJustification.RIGHT_JUSTIFY;
+                    }
+                    if (newJustification !== undefined && currentTextDocument.justification !== newJustification) {
+                        currentTextDocument.justification = newJustification;
+                        changedProperties.push("alignment");
+                        updated = true;
+                    }
                 }
 
                 // Only set the value if something actually changed
@@ -322,6 +339,14 @@ function setLayerProperties(args) {
             returnLayerInfo.fontFamily = textDocument.font;
             returnLayerInfo.fontSize = textDocument.fontSize;
             returnLayerInfo.fillColor = textDocument.fillColor;
+            // Convert justification enum back to string
+            var alignmentStr = "center";
+            if (textDocument.justification === ParagraphJustification.LEFT_JUSTIFY) {
+                alignmentStr = "left";
+            } else if (textDocument.justification === ParagraphJustification.RIGHT_JUSTIFY) {
+                alignmentStr = "right";
+            }
+            returnLayerInfo.alignment = alignmentStr;
         }
 
         // *** ADDED LOGGING HERE ***
@@ -1122,7 +1147,8 @@ function executeCommand(command, args) {
         try {
             var resultObj = JSON.parse(resultString);
             // Add a timestamp to help identify if we're getting fresh results
-            resultObj._responseTimestamp = new Date().toISOString();
+            var timeStamp = new Date();
+            resultObj._responseTimestamp = timeStamp.toString();
             resultObj._commandExecuted = command;
             resultString = JSON.stringify(resultObj, null, 2);
             logToPanel("Added timestamp to result JSON for tracking freshness.");

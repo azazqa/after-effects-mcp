@@ -14,6 +14,13 @@ function setLayerProperties(args) {
         var startTime = args.startTime; // New in-point time
         var duration = args.duration; // New duration
         
+        // Text-specific properties
+        var textContent = args.text; // Text content
+        var fontFamily = args.fontFamily; // Font family
+        var fontSize = args.fontSize; // Font size
+        var fillColor = args.fillColor; // Text color [r, g, b] (0-1)
+        var alignment = args.alignment; // Text alignment (left, center, right)
+        
         // Find the composition by name
         var comp = null;
         for (var i = 1; i <= app.project.numItems; i++) {
@@ -58,6 +65,51 @@ function setLayerProperties(args) {
         
         // Set properties if provided
         var changedProperties = [];
+        
+        // Text properties (must be handled first for TextLayer)
+        if (layer instanceof TextLayer && (textContent !== undefined || fontFamily !== undefined || fontSize !== undefined || fillColor !== undefined || alignment !== undefined)) {
+            var sourceTextProp = layer.property("Source Text");
+            if (sourceTextProp && sourceTextProp.value) {
+                var currentTextDocument = sourceTextProp.value;
+                var updated = false;
+
+                if (textContent !== undefined && textContent !== null) {
+                    currentTextDocument.text = textContent;
+                    changedProperties.push("text");
+                    updated = true;
+                }
+                if (fontFamily !== undefined && fontFamily !== null) {
+                    currentTextDocument.font = fontFamily;
+                    changedProperties.push("fontFamily");
+                    updated = true;
+                }
+                if (fontSize !== undefined && fontSize !== null) {
+                    currentTextDocument.fontSize = fontSize;
+                    changedProperties.push("fontSize");
+                    updated = true;
+                }
+                if (fillColor !== undefined && fillColor !== null) {
+                    currentTextDocument.fillColor = fillColor;
+                    changedProperties.push("fillColor");
+                    updated = true;
+                }
+                if (alignment !== undefined && alignment !== null) {
+                    if (alignment === "left") {
+                        currentTextDocument.justification = ParagraphJustification.LEFT_JUSTIFY;
+                    } else if (alignment === "center") {
+                        currentTextDocument.justification = ParagraphJustification.CENTER_JUSTIFY;
+                    } else if (alignment === "right") {
+                        currentTextDocument.justification = ParagraphJustification.RIGHT_JUSTIFY;
+                    }
+                    changedProperties.push("alignment");
+                    updated = true;
+                }
+
+                if (updated) {
+                    sourceTextProp.setValue(currentTextDocument);
+                }
+            }
+        }
         
         // Position
         if (position !== undefined && position !== null) {
@@ -107,22 +159,44 @@ function setLayerProperties(args) {
         }
         
         // Return success with updated layer details
+        var layerInfo = {
+            name: layer.name,
+            index: layer.index,
+            position: layer.property("Position").value,
+            scale: layer.property("Scale").value,
+            rotation: layer.threeDLayer 
+                ? layer.property("Rotation").value 
+                : layer.property("Rotation").value,
+            opacity: layer.property("Opacity").value,
+            inPoint: layer.inPoint,
+            outPoint: layer.outPoint,
+            changedProperties: changedProperties
+        };
+        
+        // Add text properties if it's a text layer
+        if (layer instanceof TextLayer) {
+            var textProp = layer.property("Source Text");
+            if (textProp && textProp.value) {
+                var textDoc = textProp.value;
+                layerInfo.text = textDoc.text;
+                layerInfo.fontFamily = textDoc.font;
+                layerInfo.fontSize = textDoc.fontSize;
+                layerInfo.fillColor = textDoc.fillColor;
+                
+                var alignmentStr = "center";
+                if (textDoc.justification === ParagraphJustification.LEFT_JUSTIFY) {
+                    alignmentStr = "left";
+                } else if (textDoc.justification === ParagraphJustification.RIGHT_JUSTIFY) {
+                    alignmentStr = "right";
+                }
+                layerInfo.alignment = alignmentStr;
+            }
+        }
+        
         return JSON.stringify({
             status: "success",
             message: "Layer properties updated successfully",
-            layer: {
-                name: layer.name,
-                index: layer.index,
-                position: layer.property("Position").value,
-                scale: layer.property("Scale").value,
-                rotation: layer.threeDLayer 
-                    ? layer.property("Rotation").value 
-                    : layer.property("Rotation").value,
-                opacity: layer.property("Opacity").value,
-                inPoint: layer.inPoint,
-                outPoint: layer.outPoint,
-                changedProperties: changedProperties
-            }
+            layer: layerInfo
         }, null, 2);
     } catch (error) {
         // Return error message
@@ -157,4 +231,4 @@ if (argsFile.exists) {
 var result = setLayerProperties(args);
 
 // Write the result so it can be captured by the Node.js process
-$.write(result); 
+$.write(result);
