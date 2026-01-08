@@ -4,7 +4,7 @@ echo After Effects MCP - Build and Install
 echo ================================================
 echo.
 
-echo [1/3] Pulling latest changes from Git...
+echo [1/4] Pulling latest changes from Git...
 git pull
 if errorlevel 1 (
     echo Error: Git pull failed
@@ -14,7 +14,17 @@ if errorlevel 1 (
 echo Git pull completed successfully.
 echo.
 
-echo [2/3] Building project...
+echo [2/4] Installing dependencies...
+call npm install
+if errorlevel 1 (
+    echo Error: npm install failed
+    pause
+    exit /b 1
+)
+echo Dependencies installed successfully.
+echo.
+
+echo [3/4] Building project...
 call npm run build
 if errorlevel 1 (
     echo Error: Build failed
@@ -24,8 +34,8 @@ if errorlevel 1 (
 echo Build completed successfully.
 echo.
 
-echo [3/3] Installing bridge to After Effects 2024...
-call npm run install-bridge -- "C:\Program Files\Adobe\Adobe After Effects 2025"
+echo [4/4] Installing bridge to After Effects 2024...
+call npm run install-bridge -- "C:\Program Files\Adobe\Adobe After Effects 2024"
 if errorlevel 1 (
     echo Error: Bridge installation failed
     echo You may need to run this script as Administrator
