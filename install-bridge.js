@@ -9,6 +9,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Get custom path from command line arguments (if provided)
+const customPath = process.argv[2]; // npm run install-bridge -- "C:\Custom\Path"
+
 // Possible After Effects installation paths (common locations)
 const possiblePaths = [
   'C:\\Program Files\\Adobe\\Adobe After Effects 2025',
@@ -20,10 +23,23 @@ const possiblePaths = [
 
 // Find valid After Effects installation
 let afterEffectsPath = null;
-for (const testPath of possiblePaths) {
-  if (fs.existsSync(testPath)) {
-    afterEffectsPath = testPath;
-    break;
+
+// If custom path provided, use it first
+if (customPath) {
+  if (fs.existsSync(customPath)) {
+    afterEffectsPath = customPath;
+    console.log(`Using custom After Effects path: ${customPath}`);
+  } else {
+    console.error(`Error: Custom path does not exist: ${customPath}`);
+    process.exit(1);
+  }
+} else {
+  // Otherwise, search for default paths
+  for (const testPath of possiblePaths) {
+    if (fs.existsSync(testPath)) {
+      afterEffectsPath = testPath;
+      break;
+    }
   }
 }
 
@@ -32,6 +48,8 @@ if (!afterEffectsPath) {
   console.error('Please manually copy the bridge script to your After Effects ScriptUI Panels folder.');
   console.error('Source: build/scripts/mcp-bridge-auto.jsx');
   console.error('Target: C:\\Program Files\\Adobe\\Adobe After Effects [VERSION]\\Support Files\\Scripts\\ScriptUI Panels\\');
+  console.error('\nOr specify a custom path:');
+  console.error('npm run install-bridge -- "C:\\Your\\Custom\\Path\\To\\After Effects"');
   process.exit(1);
 }
 
@@ -83,4 +101,4 @@ try {
   console.error(`2. To: ${destinationScript}`);
   console.error('3. You may need to run as administrator or use File Explorer with admin rights');
   process.exit(1);
-} 
+}
