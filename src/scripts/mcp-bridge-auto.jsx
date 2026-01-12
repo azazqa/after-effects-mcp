@@ -912,6 +912,7 @@ var logText = logPanel.add("edittext", undefined, "", {multiline: true, readonly
 logText.preferredSize.height = 200;
 
 // AE 2025 warning
+var isAE2025OrLater = false;
 if (isAE2025OrLater) {
     var warning = panel.add("statictext", undefined, "AE 2025+: Dockable panels are not supported. Floating window only.");
     warning.graphics.foregroundColor = warning.graphics.newPen(warning.graphics.PenType.SOLID_COLOR, [1,0.3,0,1], 1);
